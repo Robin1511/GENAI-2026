@@ -28,34 +28,26 @@ def compute_density_grid(model, xlim=(-4, 4), ylim=(-4, 4), resolution=100):
             - X_grid, Y_grid: Grilles de coordonnées
             - density: Densité calculée sur la grille
     """
-    # Créer la grille
     x = np.linspace(xlim[0], xlim[1], resolution)
     y = np.linspace(ylim[0], ylim[1], resolution)
     X_grid, Y_grid = np.meshgrid(x, y)
     
-    # Aplatir la grille pour le traitement par batch
     grid_points = np.stack([X_grid.flatten(), Y_grid.flatten()], axis=1)
     grid_tensor = torch.tensor(grid_points, dtype=torch.float64)
     
-    # Déterminer le device
     device = next(model.parameters()).device
     grid_tensor = grid_tensor.to(device)
     
     model.eval()
     with torch.no_grad():
-        # Transformation inverse : x -> z
         z, logdet = model.inverse(grid_tensor)
         
-        # Calculer la densité selon la formule de changement de variables
-        # p_x(x) = p_z(z) * exp(logdet)
-        # où p_z(z) = (2π)^(-d/2) * exp(-0.5 * ||z||²)
         log_p_z = -0.5 * torch.sum(z ** 2, dim=-1) - np.log(2 * np.pi)
         log_p_x = log_p_z + logdet
         density = torch.exp(log_p_x)
     
     model.train()
     
-    # Reshaper en grille
     density_grid = density.cpu().numpy().reshape(resolution, resolution)
     
     return X_grid, Y_grid, density_grid
@@ -77,10 +69,8 @@ def plot_density_heatmap(X_grid, Y_grid, density, title="Densité apprise",
     """
     plt.figure(figsize=(8, 8))
     
-    # Normaliser la densité pour l'affichage
     density_normalized = density / density.max()
     
-    # Créer la heatmap
     im = plt.imshow(density_normalized.T, origin='lower', 
                    extent=[X_grid.min(), X_grid.max(), 
                           Y_grid.min(), Y_grid.max()],
@@ -99,9 +89,8 @@ def plot_density_heatmap(X_grid, Y_grid, density, title="Densité apprise",
     plt.tight_layout()
     
     if save_path:
-        # Créer le dossier de destination s'il n'existe pas
         dir_path = os.path.dirname(save_path)
-        if dir_path:  # Si le chemin contient un dossier
+        if dir_path:
             os.makedirs(dir_path, exist_ok=True)
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"Figure sauvegardée dans {save_path}")
@@ -124,12 +113,10 @@ def plot_density_comparison(true_density, learned_density, X_grid, Y_grid,
     """
     fig, axes = plt.subplots(1, 2, figsize=(12.8, 5))
     
-    # Normaliser les densités
     if true_density is not None:
         true_density_norm = true_density / true_density.max()
     learned_density_norm = learned_density / learned_density.max()
     
-    # Plot de la vraie densité
     if true_density is not None:
         ax = axes[0]
         im = ax.imshow(true_density_norm.T, origin='lower',
@@ -145,7 +132,6 @@ def plot_density_comparison(true_density, learned_density, X_grid, Y_grid,
                     ha='center', va='center', transform=axes[0].transAxes)
         axes[0].set_title("Vraie densité")
     
-    # Plot de la densité apprise
     ax = axes[1]
     im = ax.imshow(learned_density_norm.T, origin='lower',
                   extent=[X_grid.min(), X_grid.max(), 
@@ -160,9 +146,8 @@ def plot_density_comparison(true_density, learned_density, X_grid, Y_grid,
     plt.tight_layout()
     
     if save_path:
-        # Créer le dossier de destination s'il n'existe pas
         dir_path = os.path.dirname(save_path)
-        if dir_path:  # Si le chemin contient un dossier
+        if dir_path:
             os.makedirs(dir_path, exist_ok=True)
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"Figure sauvegardée dans {save_path}")
@@ -186,10 +171,8 @@ def plot_density_3d(X_grid, Y_grid, density, title="Densité 3D", save_path=None
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
     
-    # Normaliser la densité
     density_norm = density / density.max()
     
-    # Créer la surface 3D
     surf = ax.plot_surface(X_grid, Y_grid, density_norm, cmap='viridis',
                           alpha=0.9, linewidth=0, antialiased=True)
     
@@ -201,9 +184,8 @@ def plot_density_3d(X_grid, Y_grid, density, title="Densité 3D", save_path=None
     plt.colorbar(surf, ax=ax, shrink=0.5, aspect=5)
     
     if save_path:
-        # Créer le dossier de destination s'il n'existe pas
         dir_path = os.path.dirname(save_path)
-        if dir_path:  # Si le chemin contient un dossier
+        if dir_path:
             os.makedirs(dir_path, exist_ok=True)
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"Figure sauvegardée dans {save_path}")

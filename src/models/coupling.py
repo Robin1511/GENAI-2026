@@ -47,23 +47,15 @@ class AffineCoupling(nn.Module):
         self.input_dim = len(mask)
         self.hidden_dim = hidden_dim
         
-        # Convertir le masque en paramètre non entraîné
-        # mask[i] = 1 signifie que la i-ème dimension reste fixe
         self.mask = nn.Parameter(torch.Tensor(mask), requires_grad=False)
         
-        # Réseau de neurones pour calculer le facteur de scale (s)
-        # Architecture : input_dim -> hidden_dim -> hidden_dim -> input_dim
         self.scale_fc1 = nn.Linear(self.input_dim, self.hidden_dim)
         self.scale_fc2 = nn.Linear(self.hidden_dim, self.hidden_dim)
         self.scale_fc3 = nn.Linear(self.hidden_dim, self.input_dim)
         
-        # Paramètre de scale initialisé selon une distribution normale
-        # Ce paramètre permet de contrôler l'amplitude des transformations
         self.scale = nn.Parameter(torch.Tensor(self.input_dim))
         init.normal_(self.scale)
         
-        # Réseau de neurones pour calculer la translation (t)
-        # Architecture : input_dim -> hidden_dim -> hidden_dim -> input_dim
         self.translation_fc1 = nn.Linear(self.input_dim, self.hidden_dim)
         self.translation_fc2 = nn.Linear(self.hidden_dim, self.hidden_dim)
         self.translation_fc3 = nn.Linear(self.hidden_dim, self.input_dim)
@@ -81,15 +73,12 @@ class AffineCoupling(nn.Module):
         Returns:
             torch.Tensor: Facteur de scale de forme (batch_size, input_dim)
         """
-        # Multiplier par le masque pour ne garder que les dimensions fixes
         masked_x = x * self.mask
         
-        # Passer à travers le réseau de neurones avec ReLU
         s = torch.relu(self.scale_fc1(masked_x))
         s = torch.relu(self.scale_fc2(s))
         s = torch.relu(self.scale_fc3(s))
         
-        # Multiplier par le paramètre de scale pour contrôler l'amplitude
         s = s * self.scale
         
         return s
@@ -104,13 +93,10 @@ class AffineCoupling(nn.Module):
         Returns:
             torch.Tensor: Vecteur de translation de forme (batch_size, input_dim)
         """
-        # Multiplier par le masque pour ne garder que les dimensions fixes
         masked_x = x * self.mask
         
-        # Passer à travers le réseau de neurones avec ReLU
         t = torch.relu(self.translation_fc1(masked_x))
         t = torch.relu(self.translation_fc2(t))
-        # Pas de ReLU sur la dernière couche pour permettre des valeurs négatives
         t = self.translation_fc3(t)
         
         return t
@@ -134,18 +120,11 @@ class AffineCoupling(nn.Module):
                 - y (torch.Tensor): Variables observées de forme (batch_size, input_dim)
                 - logdet (torch.Tensor): Log-déterminant du Jacobien de forme (batch_size,)
         """
-        # Calculer le scale et la translation
         s = self._compute_scale(x)
         t = self._compute_translation(x)
         
-        # Appliquer la transformation affine
-        # mask*x : garder les dimensions masquées inchangées
-        # (1-mask)*(x*exp(s) + t) : transformer les autres dimensions
         y = self.mask * x + (1 - self.mask) * (x * torch.exp(s) + t)
         
-        # Calculer le log-déterminant du Jacobien
-        # Pour chaque dimension transformée (mask=0), le Jacobien est exp(s)
-        # Donc log-det = sum((1-mask)*s)
         logdet = torch.sum((1 - self.mask) * s, dim=-1)
         
         return y, logdet
@@ -166,19 +145,11 @@ class AffineCoupling(nn.Module):
                 - x (torch.Tensor): Variables latentes de forme (batch_size, input_dim)
                 - logdet (torch.Tensor): Log-déterminant du Jacobien inverse de forme (batch_size,)
         """
-        # Calculer le scale et la translation à partir de y
-        # Note : on utilise y (et non x) car on doit calculer s et t à partir
-        # de la partie masquée de y pour que la transformation soit inversible
         s = self._compute_scale(y)
         t = self._compute_translation(y)
         
-        # Appliquer la transformation inverse
-        # mask*y : garder les dimensions masquées inchangées
-        # (1-mask)*((y-t)*exp(-s)) : inverser la transformation affine
         x = self.mask * y + (1 - self.mask) * ((y - t) * torch.exp(-s))
         
-        # Calculer le log-déterminant du Jacobien inverse
-        # Pour l'inverse, le log-det est l'opposé : -sum((1-mask)*s)
         logdet = torch.sum((1 - self.mask) * (-s), dim=-1)
         
         return x, logdet

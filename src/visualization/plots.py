@@ -19,7 +19,6 @@ def plot_transformation(x, z, labels=None, title="Transformation", save_path=Non
         title (str): Titre de la figure
         save_path (str, optional): Chemin pour sauvegarder la figure
     """
-    # Convertir en numpy si nécessaire
     if isinstance(x, torch.Tensor):
         x = x.cpu().detach().numpy()
     if isinstance(z, torch.Tensor):
@@ -27,7 +26,6 @@ def plot_transformation(x, z, labels=None, title="Transformation", save_path=Non
     
     fig, axes = plt.subplots(1, 2, figsize=(12.8, 4.8))
     
-    # Plot des données originales
     ax = axes[0]
     if labels is not None:
         unique_labels = np.unique(labels)
@@ -43,7 +41,6 @@ def plot_transformation(x, z, labels=None, title="Transformation", save_path=Non
     ax.grid(True, alpha=0.3)
     ax.set_aspect('equal', adjustable='box')
     
-    # Plot des données transformées
     ax = axes[1]
     if labels is not None:
         unique_labels = np.unique(labels)
@@ -63,9 +60,8 @@ def plot_transformation(x, z, labels=None, title="Transformation", save_path=Non
     plt.tight_layout()
     
     if save_path:
-        # Créer le dossier de destination s'il n'existe pas
         dir_path = os.path.dirname(save_path)
-        if dir_path:  # Si le chemin contient un dossier
+        if dir_path:
             os.makedirs(dir_path, exist_ok=True)
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"Figure sauvegardée dans {save_path}")
@@ -89,7 +85,6 @@ def plot_training_curve(losses, title="Courbe d'entraînement", save_path=None):
     plt.title(title)
     plt.grid(True, alpha=0.3)
     
-    # Ajouter une ligne de moyenne mobile pour lisser
     if len(losses) > 50:
         window = min(50, len(losses) // 10)
         moving_avg = np.convolve(losses, np.ones(window)/window, mode='valid')
@@ -100,7 +95,6 @@ def plot_training_curve(losses, title="Courbe d'entraînement", save_path=None):
     plt.tight_layout()
     
     if save_path:
-        # Créer le dossier de destination s'il n'existe pas
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"Figure sauvegardée dans {save_path}")
@@ -121,7 +115,6 @@ def plot_samples_comparison(real_samples, generated_samples,
         title (str): Titre de la figure
         save_path (str, optional): Chemin pour sauvegarder la figure
     """
-    # Convertir en numpy si nécessaire
     if isinstance(real_samples, torch.Tensor):
         real_samples = real_samples.cpu().detach().numpy()
     if isinstance(generated_samples, torch.Tensor):
@@ -129,7 +122,6 @@ def plot_samples_comparison(real_samples, generated_samples,
     
     fig, axes = plt.subplots(1, 2, figsize=(12.8, 4.8))
     
-    # Plot des échantillons réels
     ax = axes[0]
     if labels_real is not None:
         unique_labels = np.unique(labels_real)
@@ -146,7 +138,6 @@ def plot_samples_comparison(real_samples, generated_samples,
     ax.grid(True, alpha=0.3)
     ax.set_aspect('equal', adjustable='box')
     
-    # Plot des échantillons générés
     ax = axes[1]
     ax.scatter(generated_samples[:, 0], generated_samples[:, 1], 
               alpha=0.6, s=20, color='orange')
@@ -160,7 +151,6 @@ def plot_samples_comparison(real_samples, generated_samples,
     plt.tight_layout()
     
     if save_path:
-        # Créer le dossier de destination s'il n'existe pas
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"Figure sauvegardée dans {save_path}")
@@ -184,22 +174,16 @@ def plot_multiple_distributions(distributions_dict, title="Distributions multipl
     
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(5*n_cols, 5*n_rows))
     
-    # Normaliser axes pour qu'il soit toujours une liste indexable
-    # plt.subplots retourne différents types selon le nombre de subplots
     if n_distributions == 1:
-        # Un seul subplot : axes est un objet Axes unique
         axes_list = [axes]
     elif n_rows == 1:
-        # Une seule ligne : axes est un array 1D numpy, convertir en liste
         axes_list = list(axes.flatten()) if hasattr(axes, 'flatten') else [axes]
     else:
-        # Plusieurs lignes : axes est un array 2D numpy, convertir en liste
         axes_list = list(axes.flatten())
     
     for idx, (name, (X, labels)) in enumerate(distributions_dict.items()):
         ax = axes_list[idx]
         
-        # Convertir en numpy si nécessaire
         if isinstance(X, torch.Tensor):
             X = X.cpu().detach().numpy()
         
@@ -219,7 +203,6 @@ def plot_multiple_distributions(distributions_dict, title="Distributions multipl
         ax.grid(True, alpha=0.3)
         ax.set_aspect('equal', adjustable='box')
     
-    # Cacher les axes inutilisés
     for idx in range(n_distributions, len(axes_list)):
         axes_list[idx].axis('off')
     
@@ -227,9 +210,8 @@ def plot_multiple_distributions(distributions_dict, title="Distributions multipl
     plt.tight_layout()
     
     if save_path:
-        # Créer le dossier de destination s'il n'existe pas
         dir_path = os.path.dirname(save_path)
-        if dir_path:  # Si le chemin contient un dossier
+        if dir_path:
             os.makedirs(dir_path, exist_ok=True)
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"Figure sauvegardée dans {save_path}")

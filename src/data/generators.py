@@ -95,25 +95,21 @@ def generate_gaussian_mixture(n_samples=1000, n_components=3, means=None, covs=N
         >>> covs = [np.eye(2)*0.5, np.eye(2)*0.5, np.eye(2)*0.3]
         >>> X, labels = generate_gaussian_mixture(n_samples=1000, means=means, covs=covs)
     """
-    # Générer des moyennes aléatoires si non fournies
     if means is None:
         np.random.seed(42)
         means = [
             np.random.uniform(-2, 2, size=2) for _ in range(n_components)
         ]
     
-    # Utiliser des matrices identité si non fournies
     if covs is None:
         covs = [np.eye(2) * 0.3 for _ in range(n_components)]
     
-    # Utiliser des poids uniformes si non fournis
     if weights is None:
         weights = np.ones(n_components) / n_components
     else:
         weights = np.array(weights)
-        weights = weights / weights.sum()  # Normaliser
+        weights = weights / weights.sum()
     
-    # Générer les échantillons
     np.random.seed(42)
     samples_per_component = np.random.multinomial(n_samples, weights)
     
@@ -121,16 +117,13 @@ def generate_gaussian_mixture(n_samples=1000, n_components=3, means=None, covs=N
     labels_list = []
     
     for i, (mean, cov, n) in enumerate(zip(means, covs, samples_per_component)):
-        # Générer des échantillons pour cette composante
         X_component = np.random.multivariate_normal(mean, cov, size=n)
         X_list.append(X_component)
         labels_list.append(np.full(n, i))
     
-    # Concaténer tous les échantillons
     X = np.vstack(X_list)
     labels = np.hstack(labels_list)
     
-    # Mélanger les échantillons
     indices = np.random.permutation(len(X))
     X = X[indices]
     labels = labels[indices]
@@ -149,15 +142,15 @@ def generate_custom_gaussian_mixture_2d():
         tuple: (X, labels) avec 1000 échantillons par défaut
     """
     means = [
-        [-1.5, -1.5],  # Composante en bas à gauche
-        [1.5, 1.5],    # Composante en haut à droite
-        [0, 0]         # Composante au centre
+        [-1.5, -1.5],
+        [1.5, 1.5],
+        [0, 0]
     ]
     
     covs = [
-        np.eye(2) * 0.4,  # Covariance plus large
         np.eye(2) * 0.4,
-        np.eye(2) * 0.25  # Covariance plus serrée pour le centre
+        np.eye(2) * 0.4,
+        np.eye(2) * 0.25
     ]
     
     return generate_gaussian_mixture(

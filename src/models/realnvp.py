@@ -40,13 +40,11 @@ class RealNVP_2D(nn.Module):
         super(RealNVP_2D, self).__init__()
         self.hidden_dim = hidden_dim
         
-        # Convertir les masques en paramètres non entraînables
         self.masks = nn.ParameterList([
             nn.Parameter(torch.Tensor(m), requires_grad=False)
             for m in masks
         ])
         
-        # Créer une couche de couplage affine pour chaque masque
         self.affine_couplings = nn.ModuleList([
             AffineCoupling(self.masks[i], self.hidden_dim)
             for i in range(len(self.masks))
@@ -73,19 +71,13 @@ class RealNVP_2D(nn.Module):
                 - y (torch.Tensor): Variables observées de forme (batch_size, 2)
                 - logdet_tot (torch.Tensor): Log-déterminant total de forme (batch_size,)
         """
-        # Initialiser avec les variables latentes
         y = x
         logdet_tot = torch.zeros(x.shape[0], device=x.device, dtype=x.dtype)
         
-        # Appliquer toutes les couches de couplage affine séquentiellement
         for i in range(len(self.affine_couplings)):
             y, logdet = self.affine_couplings[i](y)
             logdet_tot = logdet_tot + logdet
         
-        # Couche de normalisation finale : y = 4*tanh(y)
-        # Cette couche limite les valeurs à l'intervalle [-4, 4]
-        # Le log-déterminant du Jacobien de tanh est : log(1 - tanh²(y))
-        # Pour 4*tanh(y), le log-det est : log(4*(1-tanh²(y))) = log(4) + log(1-tanh²(y))
         logdet_normalization = torch.sum(
             torch.log(torch.abs(4 * (1 - torch.tanh(y) ** 2))),
             dim=-1
@@ -112,22 +104,16 @@ class RealNVP_2D(nn.Module):
                 - x (torch.Tensor): Variables latentes de forme (batch_size, 2)
                 - logdet_tot (torch.Tensor): Log-déterminant total inverse de forme (batch_size,)
         """
-        # Initialiser avec les variables observées
         x = y
         logdet_tot = torch.zeros(y.shape[0], device=y.device, dtype=y.dtype)
         
-        # Inverser la couche de normalisation
-        # Pour y = 4*tanh(x), on a x = atanh(y/4)
-        # Le log-déterminant inverse est : log(1/(4*(1-(y/4)²))) = -log(4) - log(1-(y/4)²)
         logdet_normalization = torch.sum(
             torch.log(torch.abs(1.0 / 4.0 * 1 / (1 - (x / 4) ** 2))),
             dim=-1
         )
-        x = 0.5 * torch.log((1 + x / 4) / (1 - x / 4))  # atanh(x/4)
+        x = 0.5 * torch.log((1 + x / 4) / (1 - x / 4))
         logdet_tot = logdet_tot + logdet_normalization
         
-        # Appliquer les couches de couplage en ordre inverse
-        # On doit inverser dans l'ordre opposé pour annuler les transformations
         for i in range(len(self.affine_couplings) - 1, -1, -1):
             x, logdet = self.affine_couplings[i].inverse(x)
             logdet_tot = logdet_tot + logdet

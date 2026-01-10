@@ -36,7 +36,6 @@ def generate_alternating_masks(n_layers, dim=2):
     masks = []
     for i in range(n_layers):
         mask = [0.0] * dim
-        # Alterner entre masquer la première et la deuxième dimension
         mask[i % dim] = 1.0
         masks.append(mask)
     return masks
@@ -59,16 +58,13 @@ def generate_checkerboard_masks(n_layers, dim=2):
     Note:
         Pour dim=2, cette fonction est équivalente à generate_alternating_masks
     """
-    # Pour 2D, checkerboard = alternating
     if dim == 2:
         return generate_alternating_masks(n_layers, dim)
     
-    # Pour dimensions plus élevées, créer un vrai pattern damier
     masks = []
     for i in range(n_layers):
         mask = []
         for j in range(dim):
-            # Pattern damier : alterner 1 et 0 selon la position
             value = 1.0 if ((i + j) % 2 == 0) else 0.0
             mask.append(value)
         masks.append(mask)
@@ -105,7 +101,6 @@ def generate_random_masks(n_layers, dim=2, seed=None):
     masks = []
     for i in range(n_layers):
         mask = [0.0] * dim
-        # Choisir aléatoirement quelle dimension masquer
         masked_dim = random.randint(0, dim - 1)
         mask[masked_dim] = 1.0
         masks.append(mask)

@@ -51,10 +51,8 @@ class DistributionDataset(Dataset):
         Returns:
             torch.Tensor: Échantillons de forme (n_samples, 2)
         """
-        # Générer de nouveaux échantillons à chaque accès
         X, _ = self.generator_func(n_samples=self.n_samples, **self.generator_args)
         
-        # Convertir en tensor PyTorch
         X_tensor = torch.tensor(X, dtype=torch.float64)
         
         return X_tensor

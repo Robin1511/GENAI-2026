@@ -59,15 +59,11 @@ def negative_log_likelihood(z, logdet):
         >>> loss = negative_log_likelihood(z, logdet)
         >>> print(loss.item())
     """
-    # Calculer la norme au carré de z pour chaque échantillon
-    z_norm_sq = torch.sum(0.5 * z ** 2, dim=-1)  # Shape: (batch_size,)
+    z_norm_sq = torch.sum(0.5 * z ** 2, dim=-1)
     
-    # Calculer la NLL pour chaque échantillon
-    # log(2π) est une constante pour une gaussienne standard 2D
     log_2pi = torch.log(z.new_tensor([2 * math.pi]))
     nll_per_sample = log_2pi + z_norm_sq - logdet
     
-    # Retourner la moyenne sur le batch
     return torch.mean(nll_per_sample)
 
 

@@ -60,20 +60,16 @@ class Trainer:
         Returns:
             float: Valeur de la perte pour cette étape
         """
-        # Générer un batch de données
         X = data_generator()
         if isinstance(X, tuple):
-            X = X[0]  # Prendre seulement les données, pas les labels
+            X = X[0]
         X = X.to(self.device)
         
-        # Transformation inverse : x -> z
         z, logdet = self.model.inverse(X)
         
-        # Calculer la perte (negative log-likelihood)
         from .losses import negative_log_likelihood
         loss = negative_log_likelihood(z, logdet)
         
-        # Backward pass
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
@@ -98,11 +94,9 @@ class Trainer:
         start_time = time.time()
         
         for step in range(n_steps):
-            # Effectuer une étape d'entraînement
             loss = self.train_step(data_generator)
             self.loss_history.append(loss)
             
-            # Afficher la progression
             if verbose and (step + 1) % print_every == 0:
                 elapsed_time = time.time() - start_time
                 print(f"Step {step+1}/{n_steps}, Loss: {loss:.5f}, "
@@ -129,14 +123,11 @@ class Trainer:
         X = X.to(self.device)
         
         with torch.no_grad():
-            # Transformation inverse
             z, logdet = self.model.inverse(X)
             
-            # Calculer la perte
             from .losses import negative_log_likelihood
             nll = negative_log_likelihood(z, logdet)
             
-            # Calculer des statistiques sur z (devrait être ~N(0,1))
             z_mean = torch.mean(z, dim=0)
             z_std = torch.std(z, dim=0)
         
@@ -161,10 +152,8 @@ class Trainer:
         self.model.eval()
         
         with torch.no_grad():
-            # Échantillonner depuis la distribution normale standard
             z = torch.normal(0, 1, size=(n_samples, 2)).to(self.device)
             
-            # Transformation forward : z -> x
             x, _ = self.model(z)
         
         self.model.train()
