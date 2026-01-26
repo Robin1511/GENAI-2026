@@ -57,16 +57,25 @@ def plot_transformation(x, z, labels=None, title="Transformation", save_path=Non
     ax.set_aspect("equal", adjustable="box")
 
     plt.suptitle(title, fontsize=14, y=1.02)
-    plt.tight_layout()
+    
+    try:
+        plt.tight_layout()
+    except Exception as e:
+        print(f"Warning: tight_layout() failed ({type(e).__name__}). Using subplots_adjust instead.")
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.1, wspace=0.3)
 
     if save_path:
         dir_path = os.path.dirname(save_path)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Figure sauvegardée dans {save_path}")
+        try:
+            plt.savefig(save_path, dpi=150, bbox_inches="tight")
+            print(f"Figure sauvegardée dans {save_path}")
+        except Exception as e:
+            print(f"Warning: Could not save figure ({type(e).__name__}). Continuing anyway.")
 
     plt.show()
+    plt.close()  # Close figure to prevent Jupyter rendering issues
 
 
 def plot_training_curve(losses, title="Courbe d'entraînement", save_path=None):
@@ -96,14 +105,22 @@ def plot_training_curve(losses, title="Courbe d'entraînement", save_path=None):
         )
         plt.legend()
 
-    plt.tight_layout()
+    try:
+        plt.tight_layout()
+    except Exception as e:
+        print(f"Warning: tight_layout() failed ({type(e).__name__}). Continuing anyway.")
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.1)
 
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Figure sauvegardée dans {save_path}")
+        try:
+            plt.savefig(save_path, dpi=150, bbox_inches="tight")
+            print(f"Figure sauvegardée dans {save_path}")
+        except Exception as e:
+            print(f"Warning: Could not save figure ({type(e).__name__}). Continuing anyway.")
 
     plt.show()
+    plt.close()  # Close figure to prevent Jupyter rendering issues
 
 
 def plot_samples_comparison(
@@ -166,14 +183,23 @@ def plot_samples_comparison(
     ax.set_aspect("equal", adjustable="box")
 
     plt.suptitle(title, fontsize=14, y=1.02)
-    plt.tight_layout()
+    
+    try:
+        plt.tight_layout()
+    except Exception as e:
+        print(f"Warning: tight_layout() failed ({type(e).__name__}). Using subplots_adjust instead.")
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.1, wspace=0.3)
 
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Figure sauvegardée dans {save_path}")
+        try:
+            plt.savefig(save_path, dpi=150, bbox_inches="tight")
+            print(f"Figure sauvegardée dans {save_path}")
+        except Exception as e:
+            print(f"Warning: Could not save figure ({type(e).__name__}). Continuing anyway.")
 
     plt.show()
+    plt.close()  # Close figure to prevent Jupyter rendering issues
 
 
 def plot_multiple_distributions(
@@ -228,13 +254,22 @@ def plot_multiple_distributions(
         axes_list[idx].axis("off")
 
     plt.suptitle(title, fontsize=14, y=1.02)
-    plt.tight_layout()
+    
+    try:
+        plt.tight_layout()
+    except Exception as e:
+        print(f"Warning: tight_layout() failed ({type(e).__name__}). Using subplots_adjust instead.")
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.1, wspace=0.3, hspace=0.4)
 
     if save_path:
         dir_path = os.path.dirname(save_path)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Figure sauvegardée dans {save_path}")
+        try:
+            plt.savefig(save_path, dpi=150, bbox_inches="tight")
+            print(f"Figure sauvegardée dans {save_path}")
+        except Exception as e:
+            print(f"Warning: Could not save figure ({type(e).__name__}). Continuing anyway.")
 
     plt.show()
+    plt.close()  # Close figure to prevent Jupyter rendering issues

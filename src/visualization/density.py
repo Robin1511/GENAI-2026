@@ -79,7 +79,7 @@ def plot_density_heatmap(
     density_normalized = density / density.max()
 
     im = plt.imshow(
-        density_normalized.T,
+        density_normalized,
         origin="lower",
         extent=[X_grid.min(), X_grid.max(), Y_grid.min(), Y_grid.max()],
         cmap="viridis",
@@ -97,16 +97,23 @@ def plot_density_heatmap(
     if ylim:
         plt.ylim(ylim)
 
-    plt.tight_layout()
+    try:
+        plt.tight_layout()
+    except Exception as e:
+        print(f"Warning: tight_layout() failed ({type(e).__name__}). Continuing anyway.")
 
     if save_path:
         dir_path = os.path.dirname(save_path)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Figure sauvegardée dans {save_path}")
+        try:
+            plt.savefig(save_path, dpi=150, bbox_inches="tight")
+            print(f"Figure sauvegardée dans {save_path}")
+        except Exception as e:
+            print(f"Warning: Could not save figure ({type(e).__name__}). Continuing anyway.")
 
     plt.show()
+    plt.close()  # Close figure to prevent Jupyter rendering issues
 
 
 def plot_density_comparison(
@@ -137,7 +144,7 @@ def plot_density_comparison(
     if true_density is not None:
         ax = axes[0]
         im = ax.imshow(
-            true_density_norm.T,
+            true_density_norm,
             origin="lower",
             extent=[X_grid.min(), X_grid.max(), Y_grid.min(), Y_grid.max()],
             cmap="viridis",
@@ -161,7 +168,7 @@ def plot_density_comparison(
 
     ax = axes[1]
     im = ax.imshow(
-        learned_density_norm.T,
+        learned_density_norm,
         origin="lower",
         extent=[X_grid.min(), X_grid.max(), Y_grid.min(), Y_grid.max()],
         cmap="viridis",
@@ -174,16 +181,25 @@ def plot_density_comparison(
     plt.colorbar(im, ax=ax, label="Densité normalisée")
 
     plt.suptitle(title, fontsize=14, y=1.02)
-    plt.tight_layout()
+    
+    try:
+        plt.tight_layout()
+    except Exception as e:
+        print(f"Warning: tight_layout() failed ({type(e).__name__}). Using subplots_adjust instead.")
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.1, wspace=0.3)
 
     if save_path:
         dir_path = os.path.dirname(save_path)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Figure sauvegardée dans {save_path}")
+        try:
+            plt.savefig(save_path, dpi=150, bbox_inches="tight")
+            print(f"Figure sauvegardée dans {save_path}")
+        except Exception as e:
+            print(f"Warning: Could not save figure ({type(e).__name__}). Continuing anyway.")
 
     plt.show()
+    plt.close()  # Close figure to prevent Jupyter rendering issues
 
 
 def plot_density_3d(X_grid, Y_grid, density, title="Densité 3D", save_path=None):
@@ -225,7 +241,11 @@ def plot_density_3d(X_grid, Y_grid, density, title="Densité 3D", save_path=None
         dir_path = os.path.dirname(save_path)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Figure sauvegardée dans {save_path}")
+        try:
+            plt.savefig(save_path, dpi=150, bbox_inches="tight")
+            print(f"Figure sauvegardée dans {save_path}")
+        except Exception as e:
+            print(f"Warning: Could not save figure ({type(e).__name__}). Continuing anyway.")
 
     plt.show()
+    plt.close()  # Close figure to prevent Jupyter rendering issues
