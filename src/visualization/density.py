@@ -49,6 +49,10 @@ def compute_density_grid(model, xlim=(-4, 4), ylim=(-4, 4), resolution=100):
     model.train()
 
     density_grid = density.cpu().numpy().reshape(resolution, resolution)
+    
+    # Vérifications et nettoyage
+    density_grid = np.nan_to_num(density_grid, nan=0.0, posinf=0.0, neginf=0.0)
+    density_grid = np.clip(density_grid, 0, None)  # S'assurer que toutes les valeurs sont >= 0
 
     return X_grid, Y_grid, density_grid
 
@@ -74,23 +78,50 @@ def plot_density_heatmap(
         ylim (tuple, optional): Limites en y pour l'affichage
         save_path (str, optional): Chemin pour sauvegarder la figure
     """
+    # Nettoyage des valeurs invalides
+    density = np.nan_to_num(density, nan=0.0, posinf=0.0, neginf=0.0)
+    density = np.clip(density, 0, None)
+    
+    # Vérifications
+    density_max = np.max(density)
+    density_min = np.min(density)
+    
+    print(f"Debug densité: min={density_min:.2e}, max={density_max:.2e}, mean={np.mean(density):.2e}")
+    
+    if density_max <= 0 or np.isclose(density_max, 0):
+        print("Warning: La densité maximale est zéro ou très proche de zéro. Le graphique sera vide.")
+        plt.figure(figsize=(8, 8))
+        plt.text(0.5, 0.5, "Densité vide ou invalide", 
+                ha="center", va="center", transform=plt.gca().transAxes)
+        plt.title(title)
+        plt.xlabel(r"$x_1$")
+        plt.ylabel(r"$x_2$")
+        if save_path:
+            plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        plt.show()
+        plt.close()
+        return
+    
+    # Normalisation robuste
+    density_normalized = density / density_max
+    
     plt.figure(figsize=(8, 8))
-
-    density_normalized = density / density.max()
-
-    im = plt.imshow(
+    
+    # Utiliser contourf pour une meilleure visualisation
+    contour = plt.contourf(
+        X_grid,
+        Y_grid,
         density_normalized,
-        origin="lower",
-        extent=[X_grid.min(), X_grid.max(), Y_grid.min(), Y_grid.max()],
+        levels=20,
         cmap="viridis",
-        aspect="equal",
-        interpolation="bilinear",
+        extend='both'
     )
-
-    plt.colorbar(im, label="Densité normalisée")
+    
+    plt.colorbar(contour, label="Densité normalisée")
     plt.xlabel(r"$x_1$")
     plt.ylabel(r"$x_2$")
     plt.title(title)
+    plt.axis('equal')
 
     if xlim:
         plt.xlim(xlim)
@@ -137,24 +168,43 @@ def plot_density_comparison(
     """
     fig, axes = plt.subplots(1, 2, figsize=(12.8, 5))
 
+    # Nettoyage et normalisation robuste
     if true_density is not None:
-        true_density_norm = true_density / true_density.max()
-    learned_density_norm = learned_density / learned_density.max()
+        true_density = np.nan_to_num(true_density, nan=0.0, posinf=0.0, neginf=0.0)
+        true_density = np.clip(true_density, 0, None)
+        true_max = np.max(true_density)
+        if true_max > 0:
+            true_density_norm = true_density / true_max
+        else:
+            true_density_norm = true_density
+    
+    learned_density = np.nan_to_num(learned_density, nan=0.0, posinf=0.0, neginf=0.0)
+    learned_density = np.clip(learned_density, 0, None)
+    learned_max = np.max(learned_density)
+    if learned_max > 0:
+        learned_density_norm = learned_density / learned_max
+    else:
+        learned_density_norm = learned_density
 
     if true_density is not None:
         ax = axes[0]
-        im = ax.imshow(
-            true_density_norm,
-            origin="lower",
-            extent=[X_grid.min(), X_grid.max(), Y_grid.min(), Y_grid.max()],
-            cmap="viridis",
-            aspect="equal",
-            interpolation="bilinear",
-        )
+        if true_max > 0:
+            contour = ax.contourf(
+                X_grid,
+                Y_grid,
+                true_density_norm,
+                levels=20,
+                cmap="viridis",
+                extend='both'
+            )
+            plt.colorbar(contour, ax=ax, label="Densité normalisée")
+        else:
+            ax.text(0.5, 0.5, "Densité vide", ha="center", va="center", 
+                   transform=ax.transAxes)
         ax.set_title("Vraie densité")
         ax.set_xlabel(r"$x_1$")
         ax.set_ylabel(r"$x_2$")
-        plt.colorbar(im, ax=ax, label="Densité normalisée")
+        ax.axis('equal')
     else:
         axes[0].text(
             0.5,
@@ -167,18 +217,23 @@ def plot_density_comparison(
         axes[0].set_title("Vraie densité")
 
     ax = axes[1]
-    im = ax.imshow(
-        learned_density_norm,
-        origin="lower",
-        extent=[X_grid.min(), X_grid.max(), Y_grid.min(), Y_grid.max()],
-        cmap="viridis",
-        aspect="equal",
-        interpolation="bilinear",
-    )
+    if learned_max > 0:
+        contour = ax.contourf(
+            X_grid,
+            Y_grid,
+            learned_density_norm,
+            levels=20,
+            cmap="viridis",
+            extend='both'
+        )
+        plt.colorbar(contour, ax=ax, label="Densité normalisée")
+    else:
+        ax.text(0.5, 0.5, "Densité vide", ha="center", va="center", 
+               transform=ax.transAxes)
     ax.set_title("Densité apprise")
     ax.set_xlabel(r"$x_1$")
     ax.set_ylabel(r"$x_2$")
-    plt.colorbar(im, ax=ax, label="Densité normalisée")
+    ax.axis('equal')
 
     plt.suptitle(title, fontsize=14, y=1.02)
     
@@ -215,10 +270,19 @@ def plot_density_3d(X_grid, Y_grid, density, title="Densité 3D", save_path=None
     """
     from mpl_toolkits.mplot3d import Axes3D
 
+    # Nettoyage
+    density = np.nan_to_num(density, nan=0.0, posinf=0.0, neginf=0.0)
+    density = np.clip(density, 0, None)
+    
+    density_max = np.max(density)
+    if density_max <= 0:
+        print("Warning: La densité maximale est zéro. Impossible de visualiser en 3D.")
+        return
+
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection="3d")
 
-    density_norm = density / density.max()
+    density_norm = density / density_max
 
     surf = ax.plot_surface(
         X_grid,
